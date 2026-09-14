@@ -9,7 +9,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "nest build && npm run build:frontend && xcopy /E /Y frontend\\dist public",
+    "build": "nest build && npm run build:frontend && cp -r frontend/dist public",
     "build:frontend": "cd frontend && npm run build",
     "start": "nest start",
     "start:dev": "nest start --watch",
