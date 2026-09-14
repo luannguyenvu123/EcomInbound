@@ -1,1 +1,0 @@
-fix: move type packages + remove vitest/globals from tsconfig for Render build

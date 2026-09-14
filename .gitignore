@@ -29,3 +29,4 @@ npm-debug.log*
 uploads/*
 !uploads/.gitkeep
 /data/last_result.json
+COMMIT_MSG.txt  
