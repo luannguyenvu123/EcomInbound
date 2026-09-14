@@ -41,10 +41,11 @@
     "multer": "^2.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "@nestjs/cli": "^12.0.0",
+    "typescript": "^6.0.2"
   },
   "devDependencies": {
-    "@nestjs/cli": "^12.0.0",
     "@nestjs/schematics": "^12.0.0",
     "@nestjs/testing": "^12.0.1",
     "@types/express": "^5.0.0",
@@ -55,8 +56,6 @@
     "prettier": "^3.4.2",
     "prisma": "^6.6.0",
     "supertest": "^7.0.0",
-    "tsx": "^4.23.13",
-    "typescript": "^6.0.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.2"
   }
