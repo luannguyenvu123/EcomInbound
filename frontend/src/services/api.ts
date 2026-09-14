@@ -62,4 +62,43 @@ export const mappingApi = {
       .then((r) => r.data),
 };
 
+// ===== Excel API =====
+export interface XeData {
+  name: string;
+  totalSlThung: number;
+  totalSlGoiLe: number;
+  itemCount: number;
+}
+
+export interface ProcessResult {
+  success: boolean;
+  totalRows: number;
+  successRows: number;
+  errorRows: number;
+  totalSlThung: number;
+  totalSlGoiLe: number;
+  xeList: XeData[];
+  warehouse: { code: string; name: string } | null;
+}
+
+export const excelApi = {
+  process: (file: File, warehouseId: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('warehouseId', warehouseId);
+    return api
+      .post<ProcessResult>('/process', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data);
+  },
+
+  exportHaravan: (xe?: string) => {
+    const params = xe ? { xe } : {};
+    return api
+      .get('/export', { params, responseType: 'blob' })
+      .then((r) => r.data);
+  },
+};
+
 export default api;

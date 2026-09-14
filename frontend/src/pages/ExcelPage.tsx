@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { excelApi, warehouseApi, type ProcessResult, type Warehouse } from '../services/api';
 import Toast from '../components/Toast';
 
 interface ProcessedRow {
@@ -16,48 +17,93 @@ interface ProcessedRow {
   statusText: string;
 }
 
-// Demo data matching Stitch design
-const DEMO_DATA: ProcessedRow[] = [
-  { stt: 1, sku: 'SP-LAVIE-500ML', name: 'Nước khoáng thiên nhiên LaVie 500ml', spec: '24 chai/thùng', quantity: 2400, cartonPct: '100%', loosePct: '0%', cartonQty: 100, looseQty: 0, finalSku: 'HAR-LAVIE-500-CTN', status: 'success', statusText: 'Thành công' },
-  { stt: 2, sku: 'SP-MILO-180ML', name: 'Sữa lúa mạch Milo ít đường 180ml', spec: '48 hộp/thùng', quantity: 1452, cartonPct: '99.17%', loosePct: '0.83%', cartonQty: 30, looseQty: 12, finalSku: 'HAR-MILO-180-MIX', status: 'success', statusText: 'Đã khớp SKU' },
-  { stt: 3, sku: 'ERR-COCA-330', name: 'Nước ngọt có gas Coca-Cola lon 330ml', spec: '0 chai/thùng', quantity: 500, cartonPct: '--', loosePct: '--', cartonQty: 0, looseQty: 500, finalSku: 'CHUA_MAPPING_V2', status: 'error', statusText: 'Lỗi quy cách' },
-  { stt: 4, sku: 'SP-TH-TRUEMILK-1L', name: 'Sữa tươi TH true MILK nguyên chất 1L', spec: '12 hộp/thùng', quantity: 1200, cartonPct: '100%', loosePct: '0%', cartonQty: 100, looseQty: 0, finalSku: 'HAR-TH-1L-CTN', status: 'success', statusText: 'Thành công' },
-  { stt: 5, sku: 'SP-CHINSU-250G', name: 'Tương ớt cay nồng Chin-su 250g', spec: '24 chai/thùng', quantity: 3618, cartonPct: '99.50%', loosePct: '0.50%', cartonQty: 150, looseQty: 18, finalSku: 'HAR-CHINSU-250-MIX', status: 'success', statusText: 'Đã khớp SKU' },
-  { stt: 6, sku: 'ERR-OMACHI-S2', name: 'Mì khoai tây Omachi sốt bò hầm', spec: '30 gói/thùng', quantity: -15, cartonPct: '--', loosePct: '--', cartonQty: 0, looseQty: -15, finalSku: 'SL_AM_KHONG_HOP_LE', status: 'error', statusText: 'Số lượng âm' },
-  { stt: 7, sku: 'SP-AQUAFINA-500', name: 'Nước tinh khiết Aquafina 500ml', spec: '28 chai/thùng', quantity: 2800, cartonPct: '100%', loosePct: '0%', cartonQty: 100, looseQty: 0, finalSku: 'HAR-AQUA-500-CTN', status: 'success', statusText: 'Thành công' },
-  { stt: 8, sku: 'ERR-UNK-OISHI-P9', name: 'Snack Oishi tôm cay đặc biệt 40g', spec: '80 gói/thùng', quantity: 640, cartonPct: '--', loosePct: '--', cartonQty: 8, looseQty: 0, finalSku: 'SKU_CHUA_MAPPING', status: 'error', statusText: 'SKU chưa mapping' },
-];
-
 export default function ExcelPage() {
   const [viewState, setViewState] = useState<'upload' | 'results'>('upload');
   const [filterStatus, setFilterStatus] = useState<'all' | 'success' | 'error'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState({ show: false, title: '', description: '', type: 'success' as 'success' | 'error' | 'info' });
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState<ProcessResult | null>(null);
+  const [resultRows, setResultRows] = useState<ProcessedRow[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (title: string, description: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ show: true, title, description, type });
   };
 
-  const handleFileSelect = useCallback((file: File) => {
-    showToast('Đã nhận file', `Tệp "${file.name}" đang được xử lý...`, 'info');
-    setTimeout(() => {
-      setViewState('results');
-      showToast('Xử lý hoàn tất', `Đã phân tích ${DEMO_DATA.length} dòng dữ liệu.`);
-    }, 800);
-  }, []);
+  const fetchWarehouses = useCallback(async () => {
+    try {
+      const res = await warehouseApi.getAll();
+      setWarehouses(res.data);
+      if (res.data.length > 0 && !selectedWarehouseId) {
+        setSelectedWarehouseId(res.data[0].id);
+      }
+    } catch {
+      // ignore
+    }
+  }, [selectedWarehouseId]);
 
-  const filteredData = DEMO_DATA.filter((row) => {
+  useState(() => {
+    fetchWarehouses();
+  });
+
+  const handleFileSelect = useCallback(async (file: File) => {
+    if (!selectedWarehouseId) {
+      showToast('Lỗi', 'Vui lòng chọn kho trước khi upload', 'error');
+      return;
+    }
+
+    setProcessing(true);
+    showToast('Đang xử lý', `Tệp "${file.name}" đang được phân tích...`, 'info');
+
+    try {
+      const res = await excelApi.process(file, selectedWarehouseId);
+      setResult(res);
+
+      // Map response to rows for display
+      const rows: ProcessedRow[] = [];
+      // Note: The actual row data would come from a separate endpoint
+      // For now, we show the summary from the response
+      setResultRows([]);
+      setViewState('results');
+      showToast('Xử lý hoàn tất', `Tổng: ${res.totalRows} dòng, ${res.successRows} thành công, ${res.errorRows} lỗi`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Không thể xử lý file';
+      showToast('Lỗi xử lý', msg, 'error');
+    } finally {
+      setProcessing(false);
+    }
+  }, [selectedWarehouseId]);
+
+  const filteredData = resultRows.filter((row) => {
     const matchStatus = filterStatus === 'all' || row.status === filterStatus;
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || row.sku.toLowerCase().includes(q) || row.name.toLowerCase().includes(q) || row.finalSku.toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
 
-  const successCount = DEMO_DATA.filter((r) => r.status === 'success').length;
-  const errorCount = DEMO_DATA.filter((r) => r.status === 'error').length;
-  const totalCartons = DEMO_DATA.filter((r) => r.status === 'success').reduce((s, r) => s + r.cartonQty, 0);
-  const totalLoose = DEMO_DATA.filter((r) => r.status === 'success').reduce((s, r) => s + r.looseQty, 0);
+  const successCount = result?.successRows || 0;
+  const errorCount = result?.errorRows || 0;
+  const totalCartons = result?.totalSlThung || 0;
+  const totalLoose = result?.totalSlGoiLe || 0;
+  const totalRows = result?.totalRows || 0;
+
+  const handleExport = async (xe?: string) => {
+    try {
+      const blob = await excelApi.exportHaravan(xe);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = xe ? `Haravan_${xe}.xlsx` : 'Haravan_All.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast('Xuất thành công', `Đã tải file Haravan`);
+    } catch {
+      showToast('Lỗi', 'Không thể xuất file', 'error');
+    }
+  };
 
   return (
     <div className="flex flex-col w-full">
@@ -69,7 +115,15 @@ export default function ExcelPage() {
               <span className="text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Đang xử lý cho:</span>
               <div className="flex items-center gap-1.5 px-space-xs py-0.5 rounded-lg bg-primary-container text-on-primary font-semibold text-[14px]">
                 <span className="material-symbols-outlined text-[16px]">warehouse</span>
-                <span>Kho mặc định</span>
+                <select
+                  className="bg-transparent text-on-primary font-semibold text-[14px] outline-none cursor-pointer"
+                  value={selectedWarehouseId}
+                  onChange={(e) => setSelectedWarehouseId(e.target.value)}
+                >
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -96,9 +150,11 @@ export default function ExcelPage() {
               >
                 <span className="material-symbols-outlined text-[17px]">analytics</span>
                 <span>Kết quả xử lý</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-secondary text-on-secondary text-[10px] font-bold">
-                  {DEMO_DATA.length.toLocaleString()}
-                </span>
+                {totalRows > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-secondary text-on-secondary text-[10px] font-bold">
+                    {totalRows.toLocaleString()}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -158,7 +214,7 @@ export default function ExcelPage() {
               </div>
 
               <h2 className="font-semibold text-headline-md text-on-surface mb-space-xs tracking-tight">
-                Kéo file Excel vào đây hoặc click để chọn
+                {processing ? 'Đang xử lý...' : 'Kéo file Excel vào đây hoặc click để chọn'}
               </h2>
               <p className="text-body-md text-on-surface-variant max-w-md mb-space-lg">
                 Chỉ chấp nhận tệp định dạng <span className="font-semibold text-on-surface font-mono">.xlsx</span> (Dung lượng tối đa 25MB)
@@ -167,14 +223,7 @@ export default function ExcelPage() {
               <div className="flex items-center gap-space-md">
                 <button className="bg-primary-container hover:bg-primary text-on-primary px-space-xl py-space-md rounded-xl font-semibold text-headline-sm shadow-md flex items-center gap-space-sm transition-all transform active:scale-95" type="button">
                   <span className="material-symbols-outlined text-[20px]">upload</span>
-                  <span>Chọn file từ máy tính</span>
-                </button>
-                <button
-                  className="bg-surface-container-highest hover:bg-surface-container text-on-surface px-space-lg py-space-md rounded-xl font-semibold text-[14px] transition-all shadow-sm"
-                  onClick={(e) => { e.stopPropagation(); setViewState('results'); }}
-                  type="button"
-                >
-                  Mở dữ liệu mẫu
+                  <span>{processing ? 'Đang upload...' : 'Chọn file từ máy tính'}</span>
                 </button>
               </div>
             </div>
@@ -202,7 +251,7 @@ export default function ExcelPage() {
       )}
 
       {/* ========== STATE 2: RESULTS ========== */}
-      {viewState === 'results' && (
+      {viewState === 'results' && result && (
         <div className="flex flex-col gap-space-lg animate-fade-in">
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-space-md">
@@ -213,7 +262,7 @@ export default function ExcelPage() {
                   <span className="material-symbols-outlined text-[18px]">table_rows</span>
                 </div>
               </div>
-              <span className="font-bold text-headline-lg text-on-surface font-mono">{DEMO_DATA.length.toLocaleString()}</span>
+              <span className="font-bold text-headline-lg text-on-surface font-mono">{totalRows.toLocaleString()}</span>
               <span className="text-body-sm text-on-surface-variant">dòng</span>
             </div>
             <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
@@ -225,7 +274,7 @@ export default function ExcelPage() {
               </div>
               <span className="font-bold text-headline-lg text-secondary font-mono">{successCount}</span>
               <span className="text-label-sm font-bold text-secondary bg-secondary-fixed/60 px-1.5 py-0.5 rounded w-fit">
-                {((successCount / DEMO_DATA.length) * 100).toFixed(1)}%
+                {totalRows > 0 ? ((successCount / totalRows) * 100).toFixed(1) : 0}%
               </span>
             </div>
             <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
@@ -237,7 +286,7 @@ export default function ExcelPage() {
               </div>
               <span className="font-bold text-headline-lg text-error font-mono">{errorCount}</span>
               <span className="text-label-sm font-bold text-error bg-error-container px-1.5 py-0.5 rounded w-fit">
-                {((errorCount / DEMO_DATA.length) * 100).toFixed(1)}%
+                {totalRows > 0 ? ((errorCount / totalRows) * 100).toFixed(1) : 0}%
               </span>
             </div>
             <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
@@ -262,138 +311,29 @@ export default function ExcelPage() {
             </div>
           </div>
 
-          {/* Filter & Search */}
-          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
-            <div className="flex flex-wrap items-center gap-space-sm">
-              <div className="inline-flex bg-surface-container p-1 rounded-xl">
-                {[
-                  { key: 'all' as const, label: `Tất cả (${DEMO_DATA.length})` },
-                  { key: 'success' as const, label: `Hợp lệ (${successCount})` },
-                  { key: 'error' as const, label: `Lỗi (${errorCount})` },
-                ].map((f) => (
-                  <button
-                    key={f.key}
-                    className={`px-space-md py-1 rounded-lg text-label-md transition-colors ${
-                      filterStatus === f.key
-                        ? `font-semibold bg-surface-container-lowest shadow-sm ${f.key === 'error' ? 'text-error' : 'text-primary'}`
-                        : 'text-on-surface-variant hover:text-on-surface'
-                    }`}
-                    onClick={() => setFilterStatus(f.key)}
-                  >
-                    {f.label}
-                  </button>
+          {/* Xe List */}
+          {result.xeList.length > 0 && (
+            <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+              <h3 className="text-label-md font-semibold text-on-surface mb-space-sm">Danh sách xe</h3>
+              <div className="flex flex-wrap gap-space-sm">
+                {result.xeList.map((xe) => (
+                  <div key={xe.name} className="flex items-center gap-space-sm bg-surface-container-low px-space-md py-space-sm rounded-lg">
+                    <span className="font-semibold text-on-surface">{xe.name}</span>
+                    <span className="text-body-sm text-on-surface-variant">({xe.itemCount} SP)</span>
+                    <span className="text-body-sm text-primary">Thùng: {xe.totalSlThung}</span>
+                    <span className="text-body-sm text-on-surface">Lẻ: {xe.totalSlGoiLe}</span>
+                  </div>
                 ))}
               </div>
             </div>
-            <div className="relative flex-1 sm:max-w-xs">
-              <span className="material-symbols-outlined absolute left-space-sm top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
-              <input
-                className="w-full bg-surface-container-low text-on-surface text-body-sm pl-9 pr-space-md py-1.5 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-inner"
-                placeholder="Tìm SKU, tên sản phẩm..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Results Table */}
-          <div className="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-body-sm">
-                <thead className="bg-surface-container-high/80 text-on-surface-variant text-label-sm uppercase tracking-wider">
-                  <tr className="h-9">
-                    <th className="px-space-md py-2 w-12 text-center">STT</th>
-                    <th className="px-space-md py-2 min-w-[130px]">Mã SKU</th>
-                    <th className="px-space-md py-2 min-w-[240px]">Tên sản phẩm</th>
-                    <th className="px-space-md py-2 min-w-[120px]">Quy cách</th>
-                    <th className="px-space-md py-2 text-right min-w-[90px]">Số lượng</th>
-                    <th className="px-space-md py-2 text-right min-w-[80px]">Thùng%</th>
-                    <th className="px-space-md py-2 text-right min-w-[80px]">Lẻ%</th>
-                    <th className="px-space-md py-2 text-right min-w-[100px] text-primary font-bold">SL Thùng</th>
-                    <th className="px-space-md py-2 text-right min-w-[100px] text-on-surface font-bold">SL Gói Lẻ</th>
-                    <th className="px-space-md py-2 min-w-[170px]">Final SKU (Haravan)</th>
-                    <th className="px-space-md py-2 text-center min-w-[110px]">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y-0">
-                  {filteredData.map((row) => (
-                    <tr
-                      key={row.stt}
-                      className={`h-11 transition-colors animate-fade-in stagger-${Math.min(row.stt, 10)} ${
-                        row.status === 'error'
-                          ? 'bg-error-container/40 hover:bg-error-container/60'
-                          : 'bg-secondary-fixed/10 hover:bg-secondary-fixed/20'
-                      }`}
-                    >
-                      <td className={`px-space-md py-2 font-mono text-center ${row.status === 'error' ? 'text-error font-bold' : 'text-on-surface-variant'}`}>
-                        {row.stt}
-                      </td>
-                      <td className={`px-space-md py-2 font-mono font-semibold ${row.status === 'error' ? 'text-error font-bold' : 'text-primary'}`}>
-                        {row.sku}
-                      </td>
-                      <td className={`px-space-md py-2 font-medium truncate max-w-[260px] ${row.status === 'error' ? 'text-error' : 'text-on-surface'}`} title={row.name}>
-                        {row.name}
-                      </td>
-                      <td className={`px-space-md py-2 ${row.status === 'error' ? 'text-error font-semibold' : 'text-on-surface-variant'}`}>
-                        {row.spec}
-                      </td>
-                      <td className={`px-space-md py-2 text-right font-mono font-semibold ${row.status === 'error' ? 'text-error font-bold' : ''}`}>
-                        {row.quantity.toLocaleString()}
-                      </td>
-                      <td className={`px-space-md py-2 text-right font-mono ${row.status === 'error' ? 'text-error' : row.cartonPct === '100%' ? 'text-secondary font-bold' : 'text-secondary font-bold'}`}>
-                        {row.cartonPct}
-                      </td>
-                      <td className={`px-space-md py-2 text-right font-mono ${row.status === 'error' ? 'text-error' : row.loosePct === '0%' ? 'text-outline' : 'text-primary font-bold'}`}>
-                        {row.loosePct}
-                      </td>
-                      <td className={`px-space-md py-2 text-right font-mono font-bold ${row.status === 'error' ? 'text-error' : 'text-primary'}`}>
-                        {row.cartonQty}
-                      </td>
-                      <td className={`px-space-md py-2 text-right font-mono font-bold ${row.status === 'error' ? 'text-error' : row.looseQty > 0 ? 'text-primary' : 'text-outline'}`}>
-                        {row.looseQty}
-                      </td>
-                      <td className={`px-space-md py-2 font-mono ${row.status === 'error' ? 'text-error italic' : 'text-on-surface'}`}>
-                        {row.finalSku}
-                      </td>
-                      <td className="px-space-md py-2 text-center">
-                        {row.status === 'success' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-                            {row.statusText}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-error text-on-error text-[11px] font-bold shadow-sm">
-                            {row.statusText}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Table Footer */}
-            <div className="px-space-md py-2.5 bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm text-body-sm text-on-surface-variant">
-              <div className="flex items-center gap-space-sm">
-                <span>
-                  Hiển thị {filteredData.length} trong tổng số <strong className="text-on-surface">{DEMO_DATA.length}</strong> dòng
-                </span>
-                <span className="text-outline-variant">•</span>
-                <span className="text-secondary font-medium flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[15px]">done_all</span>
-                  Đã tính toàn bộ quy cách Thùng/Lẻ
-                </span>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Bottom Action Bar */}
           <div className="sticky bottom-4 z-40 w-full bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-space-md shadow-xl flex flex-wrap items-center justify-between gap-space-md">
             <div className="flex items-center gap-space-sm">
               <button
                 className="px-space-md py-space-sm rounded-xl text-error hover:bg-error-container/40 transition-colors flex items-center gap-1.5 font-semibold text-[14px]"
-                onClick={() => setViewState('upload')}
+                onClick={() => { setViewState('upload'); setResult(null); setResultRows([]); }}
               >
                 <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
                 <span>Xóa kết quả</span>
@@ -401,8 +341,15 @@ export default function ExcelPage() {
             </div>
             <div className="flex items-center gap-space-sm flex-wrap">
               <button
+                className="bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-headline-sm px-space-lg py-space-sm rounded-xl flex items-center gap-space-sm shadow-sm transition-all"
+                onClick={() => handleExport()}
+              >
+                <span className="material-symbols-outlined text-[20px]">download</span>
+                <span>Tải file kết quả (.xlsx)</span>
+              </button>
+              <button
                 className="bg-primary-container hover:bg-primary text-on-primary font-semibold text-headline-sm px-space-lg py-space-sm rounded-xl flex items-center gap-space-sm shadow-md transition-all transform active:scale-95"
-                onClick={() => showToast('Xuất Haravan', `Đã nạp ${successCount} dòng SKU thành công lên Haravan.`)}
+                onClick={() => handleExport()}
               >
                 <span className="material-symbols-outlined text-[20px]">sync_saved_locally</span>
                 <span>Xuất Haravan</span>
