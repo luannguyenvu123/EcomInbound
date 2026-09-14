@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
 import { PrismaModule } from './prisma/prisma.module';
@@ -11,6 +13,10 @@ import { StorageModule } from './storage/storage.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      exclude: ['/api/(.*)'],
+    }),
     PrismaModule,
     WarehouseModule,
     MappingModule,

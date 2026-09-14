@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/* ===== Stitch Design Tokens (Material Design 3 Palette) ===== */
+@theme {
+  --color-surface-container-low: #eff4ff;
+  --color-primary-fixed: #dbe1ff;
+  --color-outline: #737686;
+  --color-surface-container-highest: #d3e4fe;
+  --color-surface-tint: #0053db;
+  --color-on-secondary-fixed-variant: #005236;
+  --color-secondary-container: #6cf8bb;
+  --color-error-container: #ffdad6;
+  --color-error: #ba1a1a;
+  --color-surface: #f8f9ff;
+  --color-on-tertiary-container: #ffecea;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-on-primary-fixed-variant: #003ea8;
+  --color-surface-container-lowest: #ffffff;
+  --color-secondary-fixed: #6ffbbe;
+  --color-outline-variant: #c3c6d7;
+  --color-surface-variant: #d3e4fe;
+  --color-inverse-surface: #213145;
+  --color-background: #f8f9ff;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-surface: #0b1c30;
+  --color-tertiary-container: #cf2c30;
+  --color-surface-container-high: #dce9ff;
+  --color-on-primary: #ffffff;
+  --color-tertiary-fixed: #ffdad7;
+  --color-on-background: #0b1c30;
+  --color-inverse-primary: #b4c5ff;
+  --color-primary-container: #2563eb;
+  --color-surface-dim: #cbdbf5;
+  --color-on-error-container: #93000a;
+  --color-on-tertiary-fixed-variant: #930013;
+  --color-on-secondary: #ffffff;
+  --color-primary-fixed-dim: #b4c5ff;
+  --color-on-primary-fixed: #00174b;
+  --color-on-error: #ffffff;
+  --color-on-surface-variant: #434655;
+  --color-surface-bright: #f8f9ff;
+  --color-on-secondary-container: #00714d;
+  --color-primary: #004ac6;
+  --color-on-tertiary-fixed: #410004;
+  --color-secondary: #006c49;
+  --color-surface-container: #e5eeff;
+  --color-tertiary: #ab0b1c;
+  --color-on-primary-container: #eeefff;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-fixed-dim: #ffb3ad;
+  --color-on-secondary-fixed: #002113;
+
+  /* Spacing tokens */
+  --spacing-space-xl: 1.5rem;
+  --spacing-gutter: 1rem;
+  --spacing-gutter-lg: 1.5rem;
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-md: 0.75rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-margin-lg: 2rem;
+  --spacing-space-lg: 1rem;
+  --spacing-margin: 1.5rem;
+
+  /* Font families */
+  --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Font sizes */
+  --text-headline-lg: 1.75rem;
+  --text-headline-lg--line-height: 2.25rem;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+
+  --text-headline-md: 1.25rem;
+  --text-headline-md--line-height: 1.75rem;
+  --text-headline-md--letter-spacing: -0.015em;
+  --text-headline-md--font-weight: 600;
+
+  --text-headline-sm: 1rem;
+  --text-headline-sm--line-height: 1.5rem;
+  --text-headline-sm--letter-spacing: -0.01em;
+  --text-headline-sm--font-weight: 600;
+
+  --text-body-lg: 0.9375rem;
+  --text-body-lg--line-height: 1.5rem;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.25rem;
+  --text-body-md--font-weight: 400;
+
+  --text-body-sm: 0.75rem;
+  --text-body-sm--line-height: 1rem;
+  --text-body-sm--font-weight: 400;
+
+  --text-label-md: 0.8125rem;
+  --text-label-md--line-height: 1.125rem;
+  --text-label-md--font-weight: 500;
+
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 0.875rem;
+  --text-label-sm--letter-spacing: 0.04em;
+  --text-label-sm--font-weight: 600;
+
+  --text-code-tabular: 0.8125rem;
+  --text-code-tabular--line-height: 1.25rem;
+  --text-code-tabular--font-weight: 500;
+}
+
+/* ===== Base Styles ===== */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-inter);
+}
+
+body {
+  overscroll-behavior: none;
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* ===== Toggle Switch ===== */
+.toggle-switch {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  background-color: var(--color-outline-variant);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-switch.active {
+  background-color: var(--color-secondary);
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: white;
+  border-radius: 9999px;
+  transition: transform 0.2s;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(1.25rem);
+}
+
+/* ===== Animations ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.2s ease-out forwards;
+}
+
+/* Staggered animation delays for table rows */
+.stagger-1 { animation-delay: 0.03s; }
+.stagger-2 { animation-delay: 0.06s; }
+.stagger-3 { animation-delay: 0.09s; }
+.stagger-4 { animation-delay: 0.12s; }
+.stagger-5 { animation-delay: 0.15s; }
+.stagger-6 { animation-delay: 0.18s; }
+.stagger-7 { animation-delay: 0.21s; }
+.stagger-8 { animation-delay: 0.24s; }
+.stagger-9 { animation-delay: 0.27s; }
+.stagger-10 { animation-delay: 0.30s; }
+
+/* Drag-over state for drop zone */
+.drag-over {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent) !important;
+  border-color: var(--color-primary) !important;
+}

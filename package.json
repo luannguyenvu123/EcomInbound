@@ -9,7 +9,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && npm run build:frontend && xcopy /E /Y frontend\\dist public",
+    "build:frontend": "cd frontend && npm run build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -30,22 +31,23 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@nestjs/cli": "^12.0.0",
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.0.0",
     "@nestjs/core": "^12.0.1",
     "@nestjs/platform-express": "^12.0.1",
+    "@nestjs/serve-static": "^12.0.0",
     "@nestjs/swagger": "^12.0.1",
     "@prisma/client": "^6.6.0",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^2.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "multer": "^2.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "xlsx": "^0.18.5",
-    "@nestjs/cli": "^12.0.0",
     "typescript": "^6.0.2",
-    "@types/express": "^5.0.0",
-    "@types/multer": "^2.2.0"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nestjs/schematics": "^12.0.0",
