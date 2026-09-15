@@ -125,7 +125,7 @@ export class ExcelController {
     @Query('xe') xeName: string,
     @Query('warehouseCode') warehouseCode: string,
     @Query('warehouseName') warehouseName: string,
-    @Res() res: Response,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.storageService.load();
     if (!result) {
@@ -135,14 +135,10 @@ export class ExcelController {
     const buffer = this.excelService.generateHaravanFile(result, xeName);
 
     let warehouseShort = 'All';
-    if (warehouseName && warehouseCode) {
-      warehouseShort = warehouseName.startsWith('SwiftHub')
-        ? `SWB ${warehouseCode}`
-        : warehouseCode;
+    if (warehouseCode) {
+      warehouseShort = warehouseCode;
     } else if (result.SelectedWarehouse) {
-      warehouseShort = result.SelectedWarehouse.name.startsWith('SwiftHub')
-        ? `SWB ${result.SelectedWarehouse.code}`
-        : result.SelectedWarehouse.code;
+      warehouseShort = result.SelectedWarehouse.code;
     }
 
     const now = new Date();

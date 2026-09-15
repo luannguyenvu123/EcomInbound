@@ -102,13 +102,16 @@ export default function ExcelPage() {
 
   const handleExport = async (xe?: string) => {
     try {
-      const blob = await excelApi.exportHaravan(xe, selectedWarehouse?.code, selectedWarehouse?.name);
-      const url = window.URL.createObjectURL(new Blob([blob]));
+      const { blob, filename } = await excelApi.exportHaravan(xe, selectedWarehouse?.code, selectedWarehouse?.name);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      showToast('Xuất thành công', `Đã tải file Haravan`);
+      showToast('Xuất thành công', `Đã tải file ${filename}`);
     } catch {
       showToast('Lỗi', 'Không thể xuất file', 'error');
     }

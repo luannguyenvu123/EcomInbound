@@ -117,7 +117,20 @@ export const excelApi = {
     if (warehouseName) params.warehouseName = warehouseName;
     return api
       .get('/export', { params, responseType: 'blob' })
-      .then((r) => r.data);
+      .then((r) => {
+        const contentDisposition = r.headers['content-disposition'];
+        let filename = 'Haravan.xlsx';
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+          if (filenameMatch) {
+            filename = decodeURIComponent(filenameMatch[1]);
+          } else {
+            const filenameFallback = contentDisposition.match(/filename="(.+)"/);
+            if (filenameFallback) filename = filenameFallback[1];
+          }
+        }
+        return { blob: r.data, filename };
+      });
   },
 };
 
