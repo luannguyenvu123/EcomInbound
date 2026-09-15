@@ -106,7 +106,6 @@ export default function ExcelPage() {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const a = document.createElement('a');
       a.href = url;
-      a.download = xe ? `Haravan_${xe}.xlsx` : 'Haravan_All.xlsx';
       a.click();
       window.URL.revokeObjectURL(url);
       showToast('Xuất thành công', `Đã tải file Haravan`);
