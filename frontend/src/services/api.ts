@@ -118,6 +118,13 @@ export const excelApi = {
     return api
       .get('/export', { params, responseType: 'blob' })
       .then((r) => {
+        const contentType = r.headers['content-type'];
+        if (contentType && contentType.includes('application/json')) {
+          return r.data.text().then((text: string) => {
+            const errorData = JSON.parse(text);
+            throw new Error(errorData.message || 'Export failed');
+          });
+        }
         const contentDisposition = r.headers['content-disposition'];
         let filename = 'Haravan.xlsx';
         if (contentDisposition) {

@@ -112,8 +112,9 @@ export default function ExcelPage() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       showToast('Xuất thành công', `Đã tải file ${filename}`);
-    } catch {
-      showToast('Lỗi', 'Không thể xuất file', 'error');
+    } catch (err: any) {
+      const msg = err?.message || 'Không thể xuất file';
+      showToast('Lỗi', msg, 'error');
     }
   };
 
