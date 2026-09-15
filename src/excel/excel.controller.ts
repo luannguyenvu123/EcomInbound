@@ -152,11 +152,13 @@ export class ExcelController {
       ? `Haravan_${warehouseShort}_${xeName}_${dateStr}.xlsx`
       : `Haravan_${warehouseShort}_${dateStr}.xlsx`;
 
+    const encodedFileName = encodeURIComponent(fileName);
+
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Disposition': `attachment; filename="Haravan.xlsx"; filename*=UTF-8''${encodedFileName}`,
     });
 
-    res.send(buffer);
+    res.end(buffer);
   }
 }
