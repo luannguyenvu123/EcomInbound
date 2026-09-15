@@ -102,7 +102,7 @@ export default function ExcelPage() {
 
   const handleExport = async (xe?: string) => {
     try {
-      const blob = await excelApi.exportHaravan(xe);
+      const blob = await excelApi.exportHaravan(xe, selectedWarehouse?.code, selectedWarehouse?.name);
       const url = window.URL.createObjectURL(new Blob([blob]));
       const a = document.createElement('a');
       a.href = url;
@@ -454,9 +454,9 @@ export default function ExcelPage() {
                 onClick={() => handleExport()}
               >
                 <span className="material-symbols-outlined text-[20px]">sync_saved_locally</span>
-                <span>Xuất Haravan</span>
+                <span>Xuất tất cả</span>
                 <span className="bg-secondary text-on-secondary px-2 py-0.5 rounded-full text-label-sm font-bold">
-                  ({successCount} đơn)
+                  ({result?.xeList.length || 0} xe/cont)
                 </span>
               </button>
             </div>

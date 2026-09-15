@@ -121,7 +121,12 @@ export class ExcelController {
   @ApiOperation({ summary: 'Export Haravan file' })
   @ApiResponse({ status: 200, description: 'Excel file' })
   @ApiResponse({ status: 400, description: 'No result found' })
-  async export(@Query('xe') xeName: string, @Res() res: Response) {
+  async export(
+    @Query('xe') xeName: string,
+    @Query('warehouseCode') warehouseCode: string,
+    @Query('warehouseName') warehouseName: string,
+    @Res() res: Response,
+  ) {
     const result = await this.storageService.load();
     if (!result) {
       throw new BadRequestException('No result found. Process a file first.');
@@ -129,12 +134,15 @@ export class ExcelController {
 
     const buffer = this.excelService.generateHaravanFile(result, xeName);
 
-    const warehouse = result.SelectedWarehouse;
     let warehouseShort = 'All';
-    if (warehouse) {
-      warehouseShort = warehouse.name.startsWith('SwiftHub')
-        ? `SWB ${warehouse.code}`
-        : warehouse.code;
+    if (warehouseName && warehouseCode) {
+      warehouseShort = warehouseName.startsWith('SwiftHub')
+        ? `SWB ${warehouseCode}`
+        : warehouseCode;
+    } else if (result.SelectedWarehouse) {
+      warehouseShort = result.SelectedWarehouse.name.startsWith('SwiftHub')
+        ? `SWB ${result.SelectedWarehouse.code}`
+        : result.SelectedWarehouse.code;
     }
 
     const now = new Date();

@@ -110,8 +110,11 @@ export const excelApi = {
       .then((r) => r.data);
   },
 
-  exportHaravan: (xe?: string) => {
-    const params = xe ? { xe } : {};
+  exportHaravan: (xe?: string, warehouseCode?: string, warehouseName?: string) => {
+    const params: Record<string, string> = {};
+    if (xe) params.xe = xe;
+    if (warehouseCode) params.warehouseCode = warehouseCode;
+    if (warehouseName) params.warehouseName = warehouseName;
     return api
       .get('/export', { params, responseType: 'blob' })
       .then((r) => r.data);
