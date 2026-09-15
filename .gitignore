@@ -29,4 +29,12 @@ npm-debug.log*
 uploads/*
 !uploads/.gitkeep
 /data/last_result.json
-COMMIT_MSG.txt  
+COMMIT_MSG.txt
+
+# Impeccable / AI tool files
+.agent/
+.claude/
+.cursor/
+.dsh/
+.gemini/
+.opencode/

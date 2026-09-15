@@ -70,6 +70,22 @@ export interface XeData {
   itemCount: number;
 }
 
+export interface ProcessItem {
+  sku: string;
+  name: string;
+  quyCach: number;
+  soLuong: number;
+  thungPercent: number;
+  lePercent: number;
+  slThung: number;
+  slLe: number;
+  slGoiLe: number;
+  finalSku: string;
+  hasMapping: boolean;
+  is3N: boolean;
+  errorMessage: string;
+}
+
 export interface ProcessResult {
   success: boolean;
   totalRows: number;
@@ -78,6 +94,7 @@ export interface ProcessResult {
   totalSlThung: number;
   totalSlGoiLe: number;
   xeList: XeData[];
+  items: ProcessItem[];
   warehouse: { code: string; name: string } | null;
 }
 

@@ -10,9 +10,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import type { Response } from 'express';
 import * as fs from 'fs';
+import * as path from 'path';
 import { ExcelService } from './excel.service';
 import { StorageService } from '../storage/storage.service';
 import { WarehouseService } from '../warehouse/warehouse.service';
@@ -30,7 +32,18 @@ export class ExcelController {
   ) {}
 
   @Post('process')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: path.join(process.cwd(), 'uploads'),
+        filename: (req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+        },
+      }),
+      limits: { fileSize: 25 * 1024 * 1024 },
+    }),
+  )
   @ApiOperation({ summary: 'Process Excel file and generate results' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -79,6 +92,21 @@ export class ExcelController {
           totalSlGoiLe: x.TotalSlGoiLe,
           itemCount: x.Items.length,
         })),
+        items: result.AllItems.map((item) => ({
+          sku: item.Sku,
+          name: item.Name,
+          quyCach: item.QuyCach,
+          soLuong: item.SoLuong,
+          thungPercent: item.ThungPercent,
+          lePercent: item.LePercent,
+          slThung: item.SlThung,
+          slLe: item.SlLe,
+          slGoiLe: item.SlGoiLe,
+          finalSku: item.FinalSku,
+          hasMapping: item.HasMapping,
+          is3N: item.Is3N,
+          errorMessage: item.ErrorMessage,
+        })),
         warehouse: selectedWarehouse
           ? { code: selectedWarehouse.code, name: selectedWarehouse.name }
           : null,
@@ -100,10 +128,21 @@ export class ExcelController {
     }
 
     const buffer = this.excelService.generateHaravanFile(result, xeName);
-    const warehouseCode = result.SelectedWarehouse?.code || 'All';
+
+    const warehouse = result.SelectedWarehouse;
+    let warehouseShort = 'All';
+    if (warehouse) {
+      warehouseShort = warehouse.name.startsWith('SwiftHub')
+        ? `SWB ${warehouse.code}`
+        : warehouse.code;
+    }
+
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
     const fileName = xeName
-      ? `Haravan_${warehouseCode}_${xeName}_${Date.now()}.xlsx`
-      : `Haravan_${warehouseCode}_All_${Date.now()}.xlsx`;
+      ? `Haravan_${warehouseShort}_${xeName}_${dateStr}.xlsx`
+      : `Haravan_${warehouseShort}_${dateStr}.xlsx`;
 
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

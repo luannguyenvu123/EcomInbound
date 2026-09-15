@@ -7,7 +7,6 @@ export default function MappingPage() {
   const [mappings, setMappings] = useState<Mapping[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active'>('all');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,7 +59,7 @@ export default function MappingPage() {
       );
     }
     return result;
-  }, [mappings, searchQuery, activeFilter]);
+  }, [mappings, searchQuery]);
 
   // Paginated
   const totalPages = Math.ceil(filteredMappings.length / rowsPerPage);
@@ -71,7 +70,7 @@ export default function MappingPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeFilter, rowsPerPage]);
+  }, [searchQuery, rowsPerPage]);
 
   // Create mapping
   const handleCreate = async () => {
@@ -167,8 +166,7 @@ export default function MappingPage() {
               Mapping SKU 3N → 1N (Haravan)
             </h1>
             <p className="text-body-md text-on-surface-variant mt-1 max-w-3xl">
-              Quy đổi mã SKU nhà cung cấp / đơn vị thứ 3 (3N) sang mã chuẩn Haravan (1N) dùng cho phân bổ kho,
-              đồng bộ phiếu nhập và kiểm kê tự động.
+              Quy đổi mã SKU nhà cung cấp / đơn vị thứ 3 (3N) sang mã chuẩn Haravan (1N).
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-space-sm">
@@ -200,7 +198,7 @@ export default function MappingPage() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-space-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
           <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center gap-space-md animate-fade-in stagger-1">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
               <span className="material-symbols-outlined text-[22px]">swap_horiz</span>
@@ -215,31 +213,10 @@ export default function MappingPage() {
               <span className="material-symbols-outlined text-[22px]">verified</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-label-sm text-on-surface-variant">Đang áp dụng thực tế</span>
+              <span className="text-label-sm text-on-surface-variant">Đang hoạt động</span>
               <span className="font-semibold text-headline-md text-on-surface">
                 {mappings.length.toLocaleString()}{' '}
                 <span className="text-label-sm text-on-surface-variant font-normal">(100%)</span>
-              </span>
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center gap-space-md animate-fade-in stagger-3">
-            <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[22px]">pending_actions</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-label-sm text-on-surface-variant">Kết quả tìm kiếm</span>
-              <span className="font-semibold text-headline-md text-on-surface">{filteredMappings.length.toLocaleString()}</span>
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center gap-space-md animate-fade-in stagger-4">
-            <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface">
-              <span className="material-symbols-outlined text-[22px]">warehouse</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-label-sm text-on-surface-variant">Đồng bộ tự động kho</span>
-              <span className="font-semibold text-headline-md text-secondary flex items-center gap-1">
-                Realtime
-                <span className="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
               </span>
             </div>
           </div>
@@ -261,36 +238,6 @@ export default function MappingPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
-          <div className="flex items-center gap-space-xs bg-surface-container p-1 rounded-lg">
-            <button
-              className={`px-space-md py-1.5 rounded-lg text-label-md flex items-center gap-1.5 transition-colors ${
-                activeFilter === 'all'
-                  ? 'bg-surface-container-lowest text-primary shadow-sm font-semibold'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-              onClick={() => setActiveFilter('all')}
-              type="button"
-            >
-              <span>Tất cả</span>
-              <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-label-sm">
-                {mappings.length}
-              </span>
-            </button>
-            <button
-              className={`px-space-md py-1.5 rounded-lg text-label-md flex items-center gap-1.5 transition-colors ${
-                activeFilter === 'active'
-                  ? 'bg-surface-container-lowest text-primary shadow-sm font-semibold'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-              onClick={() => setActiveFilter('active')}
-              type="button"
-            >
-              <span>Đang hoạt động</span>
-              <span className="px-1.5 py-0.5 bg-surface-container-high text-on-surface-variant rounded-full text-label-sm">
-                {mappings.length}
-              </span>
-            </button>
           </div>
         </div>
 
